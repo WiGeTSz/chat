@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DepressieConnect Chat</title>
+    <style>
+        :root {
+            --primary-color: #005b8f;
+            --secondary-color: #009fe3;
+            --background-color: #f6f7f8;
+            --message-user: #eaf6fb;
+            --message-other: #f2f2f2;
+            --accent-color: #f9b233;
+        }
+        
+        body {
+            font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            color: #222;
+        }
+        
+        #chat-container {
+            max-width: 800px;
+            margin: 32px auto;
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(0,91,143,0.08);
+            overflow: hidden;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            border: 2px solid var(--primary-color);
+        }
+        
+        #header {
+            background: linear-gradient(90deg, var(--primary-color) 60%, var(--secondary-color) 100%);
+            color: #fff;
+            padding: 22px 20px 18px 20px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.5em;
+            letter-spacing: 0.5px;
+        }
+        
+        #messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #fff;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            max-width: 70%;
+            padding: 12px 15px;
+            border-radius: 18px;
+            line-height: 1.4;
+            position: relative;
+            word-wrap: break-word;
+        }
+        
+        .user-message {
+            background-color: var(--message-user);
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+            border: 1.5px solid var(--secondary-color);
+        }
+        
+        .other-message {
+            background-color: var(--message-other);
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+            border: 1.5px solid #e0e0e0;
+        }
+        
+        .username {
+            font-weight: 700;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+            color: var(--primary-color);
+            letter-spacing: 0.2px;
+        }
+        
+        .timestamp {
+            font-size: 0.75em;
+            color: #666;
+            text-align: right;
+            margin-top: 4px;
+        }
+        
+        #message-form {
+            display: flex;
+            padding: 18px 15px 18px 15px;
+            background-color: #f6f7f8;
+            border-top: 2px solid var(--primary-color);
+            position: relative;
+        }
+        
+        #message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1.5px solid var(--primary-color);
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: border 0.3s;
+            background: #fff;
+        }
+        
+        #message-input:focus {
+            border-color: var(--accent-color);
+        }
+        
+        #send-button {
+            background: var(--accent-color);
+            color: #222;
+            border: none;
+            border-radius: 25px;
+            padding: 0 24px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1em;
+            box-shadow: 0 2px 6px rgba(0,91,143,0.07);
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        #send-button:hover {
+            background: var(--primary-color);
+            color: #fff;
+        }
+        
+        .typing-indicator {
+            font-style: italic;
+            color: var(--primary-color);
+            padding: 5px 20px;
+            font-size: 0.95em;
+        }
+        
+        @media (max-width: 600px) {
+            #chat-container {
+                margin: 0;
+                height: 100vh;
+                border-radius: 0;
+                border-width: 0;
+            }
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="chat-container" style="display:none;">
+        <div id="header">
+            WordPress Community Chat
+        </div>
+        <div id="messages"></div>
+        <div id="message-form">
+            <button id="emoji-button" title="Emoji toevoegen" style="background:none; border:none; font-size:1.5em; margin-right:8px; cursor:pointer;">😊</button>
+            <input type="text" id="message-input" placeholder="Typ je bericht..." autocomplete="off">
+            <button id="send-button">Verstuur</button>
+            <div id="emoji-picker" style="display:none; position:absolute; bottom:60px; left:0; background:#fff; border:1.5px solid #ccc; border-radius:12px; box-shadow:0 2px 8px rgba(0,91,143,0.08); padding:10px; z-index:10; max-width:260px;">
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">😀</span>
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">😂</span>
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">😊</span>
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">😍</span>
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">😢</span>
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">😡</span>
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">👍</span>
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">🙏</span>
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">💪</span>
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">❤️</span>
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">🌞</span>
+                <span class="emoji-option" style="font-size:1.4em; cursor:pointer;">🌧️</span>
+            </div>
+            <button id="toggle-chat-btn" style="display:none; margin-left:10px; background:var(--primary-color); color:#fff; border:none; border-radius:8px; padding:0 18px; font-weight:700; font-size:1em; cursor:pointer;">Sluit chat</button>
+        </div>
+
+    </div>
+
+
+    <div id="username-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:white; padding:30px 40px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.2); text-align:center;">
+            <h2>Voer je naam in</h2>
+            <input type="text" id="username-input" placeholder="Jouw naam" style="padding:10px; font-size:1em; width:80%; margin-bottom:15px;">
+            <br>
+            <button id="username-submit" style="padding:10px 25px; font-size:1em; background:#4a6fa5; color:white; border:none; border-radius:5px; cursor:pointer;">Start chat</button>
+            <br><br>
+            <a href="#" id="show-mod-login" style="font-size:0.95em; color:#166088; text-decoration:underline;">Moderator login</a>
+        </div>
+    </div>
+
+    <div id="mod-login-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:white; padding:30px 40px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.2); text-align:center;">
+            <h2>Moderator login</h2>
+            <input type="text" id="mod-username" placeholder="Moderator naam" style="padding:10px; font-size:1em; width:80%; margin-bottom:10px;">
+            <br>
+            <input type="password" id="mod-password" placeholder="Wachtwoord" style="padding:10px; font-size:1em; width:80%; margin-bottom:15px;">
+            <br>
+            <button id="mod-login-submit" style="padding:10px 25px; font-size:1em; background:#166088; color:white; border:none; border-radius:5px; cursor:pointer;">Inloggen</button>
+            <br><br>
+            <a href="#" id="mod-login-cancel" style="font-size:0.95em; color:#4a6fa5; text-decoration:underline;">Annuleren</a>
+            <div id="mod-login-error" style="color:red; margin-top:10px; display:none;"></div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const socket = io();
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const chatContainer = document.getElementById('chat-container');
+        const usernameModal = document.getElementById('username-modal');
+        const usernameInput = document.getElementById('username-input');
+        const usernameSubmit = document.getElementById('username-submit');
+        const showModLogin = document.getElementById('show-mod-login');
+        const modLoginModal = document.getElementById('mod-login-modal');
+        const modUsername = document.getElementById('mod-username');
+        const modPassword = document.getElementById('mod-password');
+        const modLoginSubmit = document.getElementById('mod-login-submit');
+        const modLoginCancel = document.getElementById('mod-login-cancel');
+        const modLoginError = document.getElementById('mod-login-error');
+        let isModerator = false;
+        // Chat open/gesloten functionaliteit
+        const toggleChatBtn = document.getElementById('toggle-chat-btn');
+        const chatClosedMsg = document.getElementById('chat-closed-message');
+        let chatOpen = true;
+
+        function updateChatStatusUI(open) {
+            chatOpen = open;
+            if (!chatOpen && !isModerator) {
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+                chatClosedMsg && (chatClosedMsg.style.display = '');
+            } else {
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                chatClosedMsg && (chatClosedMsg.style.display = 'none');
+            }
+            if (isModerator) {
+                toggleChatBtn && (toggleChatBtn.style.display = '');
+                if (toggleChatBtn) toggleChatBtn.textContent = chatOpen ? 'Sluit chat' : 'Open chat';
+            } else {
+                toggleChatBtn && (toggleChatBtn.style.display = 'none');
+            }
+        }
+
+        // Moderator: chat openen/sluiten
+        if (toggleChatBtn) {
+            toggleChatBtn.addEventListener('click', () => {
+                socket.emit('mod_toggle_chat', !chatOpen);
+            });
+        }
+
+        // Socket event: status update
+        socket.on('chat_status', (data) => {
+            updateChatStatusUI(data.open);
+        });
+
+        // Bij laden: status ophalen
+        fetch('/chat-status').then(r => r.json()).then(data => {
+            updateChatStatusUI(data.open);
+        });
+
+        // Als mod inlogt, knop tonen
+        function onModeratorLogin() {
+            isModerator = true;
+            updateChatStatusUI(chatOpen);
+        }
+
+        // Emoji functionaliteit
+        const emojiButton = document.getElementById('emoji-button');
+        const emojiPicker = document.getElementById('emoji-picker');
+        emojiButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
+        });
+        // Emoji toevoegen aan input
+        emojiPicker.querySelectorAll('.emoji-option').forEach(span => {
+            span.addEventListener('click', () => {
+                messageInput.value += span.textContent;
+                emojiPicker.style.display = 'none';
+                messageInput.focus();
+            });
+        });
+        // Sluit emoji-picker als je buiten klikt
+        document.addEventListener('click', (e) => {
+            if (!emojiPicker.contains(e.target) && e.target !== emojiButton) {
+                emojiPicker.style.display = 'none';
+            }
+        });
+        // Toon moderator login modal
+        showModLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            usernameModal.style.display = 'none';
+            modLoginModal.style.display = 'flex';
+            modUsername.value = '';
+            modPassword.value = '';
+            modLoginError.style.display = 'none';
+            setTimeout(() => modUsername.focus(), 100);
+        });
+
+        // Annuleer moderator login
+        modLoginCancel.addEventListener('click', (e) => {
+            e.preventDefault();
+            modLoginModal.style.display = 'none';
+            usernameModal.style.display = 'flex';
+        });
+
+        // Moderator login submit
+        modLoginSubmit.addEventListener('click', async () => {
+            const username = modUsername.value.trim();
+            const password = modPassword.value;
+            if (!username || !password) {
+                modLoginError.textContent = 'Vul alle velden in.';
+                modLoginError.style.display = 'block';
+                return;
+            }
+            // Stuur login naar backend
+            try {
+                const res = await fetch('/mod-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    isModerator = true;
+                    modLoginModal.style.display = 'none';
+                    chatContainer.style.display = '';
+                    startChatWithUsername(username);
+                    onModeratorLogin();
+        // Reactie op gesloten chat (bij poging tot sturen)
+        socket.on('mod_action', (data) => {
+            if (data.action === 'chat_closed') {
+                updateChatStatusUI(false);
+            }
+        });
+                } else {
+                    modLoginError.textContent = data.message || 'Inloggen mislukt';
+                    modLoginError.style.display = 'block';
+                }
+            } catch (err) {
+                modLoginError.textContent = 'Serverfout. Probeer opnieuw.';
+                modLoginError.style.display = 'block';
+            }
+        });
+        modPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') modLoginSubmit.click();
+        });
+
+        let currentUser = {
+            name: '',
+            isTyping: false,
+            lastTypingTime: 0
+        };
+
+        // Haal gebruikersnaam uit de URL-parameter
+        function getUsernameFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const username = params.get('username');
+            return username && username.trim() !== '' ? username : '';
+        }
+
+        // Toon modal om naam in te voeren
+        function showUsernameModal() {
+            usernameModal.style.display = 'flex';
+            usernameInput.value = '';
+            setTimeout(() => usernameInput.focus(), 100);
+        }
+
+        // Verberg modal en start chat
+        function startChatWithUsername(name) {
+            currentUser.name = name || 'Anoniem';
+            socket.emit('set_username', currentUser.name);
+            chatContainer.style.display = '';
+            usernameModal.style.display = 'none';
+            messageInput.focus();
+        }
+
+        // Bericht weergeven
+        const displayMessage = (data) => {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            if (data.user === currentUser.name) {
+                messageElement.classList.add('user-message');
+            } else {
+                messageElement.classList.add('other-message');
+            }
+            messageElement.innerHTML = `
+                <div class="username">${data.user}</div>
+                <div class="text">${data.text}</div>
+                <div class="timestamp">${data.timestamp || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+            `;
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        };
+
+        // Bericht verzenden
+        const sendMessage = () => {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            // Moderator commando's
+            if (isModerator && message.startsWith('/')) {
+                // /kick username  of  /timeout username seconden
+                const [cmd, target, ...rest] = message.slice(1).split(' ');
+                if (cmd === 'kick' && target) {
+                    socket.emit('mod_command', { action: 'kick', target });
+                } else if (cmd === 'timeout' && target && rest[0]) {
+                    const seconds = parseInt(rest[0], 10) || 60;
+                    socket.emit('mod_command', { action: 'timeout', target, seconds });
+                } else {
+                    displayMessage({ user: 'Systeem', text: 'Ongeldig commando.', timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+                }
+                messageInput.value = '';
+                return;
+            }
+            // Gewone chat
+            socket.emit('chat message', message);
+            displayMessage({
+                user: currentUser.name,
+                text: message,
+                timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            });
+            messageInput.value = '';
+        };
+        // Reactie op kick/timeout/gesloten chat van server
+        socket.on('mod_action', (data) => {
+            if (data.action === 'kick') {
+                alert('Je bent door een moderator uit de chat verwijderd.');
+                window.location.reload();
+            } else if (data.action === 'timeout') {
+                alert(`Je hebt een time-out van ${data.seconds} seconden gekregen.`);
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+                setTimeout(() => {
+                    messageInput.disabled = false;
+                    sendButton.disabled = false;
+                }, data.seconds * 1000);
+            } else if (data.action === 'chat_closed') {
+                updateChatStatusUI(false);
+            }
+        });
+
+        // Event listeners
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Typing indicator (optioneel)
+        messageInput.addEventListener('input', () => {
+            const now = Date.now();
+            if (!currentUser.isTyping) {
+                currentUser.isTyping = true;
+                socket.emit('typing', true);
+            }
+            currentUser.lastTypingTime = now;
+            setTimeout(() => {
+                if (now - currentUser.lastTypingTime > 2000 && currentUser.isTyping) {
+                    currentUser.isTyping = false;
+                    socket.emit('typing', false);
+                }
+            }, 2000);
+        });
+
+        // Socket.io events
+        socket.on('chat message', (data) => {
+            if (data.user !== currentUser.name) {
+                displayMessage(data);
+            }
+        });
+
+        // Optioneel: user_connected/user_disconnected events
+        socket.on('user_connected', (username) => {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = `${username} is verbonden`;
+            messagesContainer.appendChild(notification);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+        socket.on('user_disconnected', (username) => {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = `${username} heeft de chat verlaten`;
+            messagesContainer.appendChild(notification);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+
+        // Username modal events
+        usernameSubmit.addEventListener('click', () => {
+            const name = usernameInput.value.trim();
+            if (name) {
+                startChatWithUsername(name);
+            } else {
+                usernameInput.focus();
+            }
+        });
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                usernameSubmit.click();
+            }
+        });
+
+        // Initialisatie
+        const urlUsername = getUsernameFromURL();
+        if (urlUsername) {
+            chatContainer.style.display = '';
+            startChatWithUsername(urlUsername);
+        } else {
+            chatContainer.style.display = 'none';
+            showUsernameModal();
+        }
+    });
+    </script>
+</body>
+</html>
